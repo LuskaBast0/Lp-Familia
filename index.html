@@ -1,0 +1,2823 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Material Flask</title>
+    <meta
+      name="description"
+      content="Interactive product landing page for Material Flask featuring WebGL alpine contours, pinned 4K angle showcase, thermal comparison slider, and finish configurator."
+    />
+    <meta property="og:title" content="Material Flask" />
+    <meta
+      property="og:description"
+      content="Interactive product landing page for Material Flask featuring WebGL alpine contours, pinned 4K angle showcase, thermal comparison slider, and finish configurator."
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=DM+Sans:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      @font-face {
+        font-family: 'DM Sans';
+        src: url('/assets/fonts/DMSans-Regular.ttf') format('truetype');
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      @font-face {
+        font-family: 'DM Sans';
+        src: url('/assets/fonts/DMSans-Medium.ttf') format('truetype');
+        font-weight: 500;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      @font-face {
+        font-family: 'DM Sans';
+        src: url('/assets/fonts/DMSans-Bold.ttf') format('truetype');
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      @font-face {
+        font-family: 'DM Mono';
+        src: url('/assets/fonts/DMMono-Regular.ttf') format('truetype');
+        font-weight: 400 700;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      :root {
+        --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        --font-mono: 'DM Mono', monospace;
+
+        /* Easing Curves */
+        --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+        --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+        --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+        /* Shape Consistency Lock: 12px cards, 999px pills */
+        --radius-card: 12px;
+        --radius-pill: 999px;
+
+        /* Default Light Theme: Cold Alpine Mineral & Pine Sage */
+        --bg: #f3f6f4;
+        --surface: #e8eeea;
+        --surface-elevated: #dde5e0;
+        --text-primary: #111614;
+        --text-secondary: #48544e;
+        --border: rgba(17, 22, 20, 0.12);
+        --border-strong: rgba(17, 22, 20, 0.24);
+        --accent: #3d5740;
+        --accent-hover: #314734;
+        --accent-text: #f3f6f4;
+        --glass-bg: rgba(243, 246, 244, 0.8);
+        --glass-border: rgba(17, 22, 20, 0.14);
+        --shadow-tinted: 0 24px 64px rgba(17, 22, 20, 0.12);
+      }
+
+      :root[data-theme='dark'] {
+        /* Dark Theme: Alpine Basalt & Pine Sage */
+        --bg: #0c100e;
+        --surface: #141a17;
+        --surface-elevated: #1b221e;
+        --text-primary: #eff3f1;
+        --text-secondary: #98a49e;
+        --border: rgba(239, 243, 241, 0.12);
+        --border-strong: rgba(239, 243, 241, 0.24);
+        --accent: #48634b;
+        --accent-hover: #56765a;
+        --accent-text: #f4f6f5;
+        --glass-bg: rgba(18, 24, 21, 0.72);
+        --glass-border: rgba(239, 243, 241, 0.16);
+        --shadow-tinted: 0 24px 64px rgba(5, 8, 7, 0.56);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* Guarantee HTML [hidden] beats display:flex on drawers and empty states */
+      [hidden] {
+        display: none !important;
+      }
+
+      html {
+        font-family: var(--font-sans);
+        background-color: var(--bg);
+        color: var(--text-primary);
+        font-size: 17.5px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background-color: var(--bg);
+        color: var(--text-primary);
+        overflow-x: hidden;
+        transition: background-color 280ms var(--ease-out), color 280ms var(--ease-out);
+      }
+
+      img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+      }
+
+      button,
+      a {
+        font-family: inherit;
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 1360px;
+        margin-inline: auto;
+        padding-inline: clamp(20px, 4vw, 48px);
+      }
+
+      /* Fixed subtle film grain */
+      .grain-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        pointer-events: none;
+        opacity: 0.025;
+        background-image: radial-gradient(rgba(128, 128, 128, 0.5) 1px, transparent 0);
+        background-size: 24px 24px;
+      }
+
+      /* Single-line Navigation (64px height) */
+      .site-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 64px;
+        z-index: 50;
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        background: var(--glass-bg);
+        border-bottom: 1px solid var(--border);
+        transition: background-color 240ms var(--ease-out), border-color 240ms var(--ease-out);
+      }
+
+      .header-inner {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .brand-lockup {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        font-size: 19px;
+        letter-spacing: -0.02em;
+      }
+
+      .brand-mark {
+        color: var(--accent);
+      }
+
+      .header-nav {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+      }
+
+      .nav-link {
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        transition: color 160ms var(--ease-out);
+      }
+
+      @media (hover: hover) and (pointer: fine) {
+        .nav-link:hover {
+          color: var(--text-primary);
+        }
+      }
+
+      .icon-btn {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-pill);
+        border: 1px solid var(--border);
+        background: transparent;
+        cursor: pointer;
+        font-size: 19px;
+        transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out), background-color 160ms var(--ease-out);
+      }
+
+      .icon-btn:active {
+        transform: scale(0.95);
+      }
+
+      @media (hover: hover) and (pointer: fine) {
+        .icon-btn:hover {
+          border-color: var(--border-strong);
+          background: var(--surface);
+        }
+      }
+
+      [data-theme='dark'] #theme-icon-moon {
+        display: none;
+      }
+
+      [data-theme='light'] #theme-icon-sun {
+        display: none;
+      }
+
+      .bag-count {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        min-width: 19px;
+        height: 19px;
+        padding-inline: 5px;
+        border-radius: var(--radius-pill);
+        background: var(--accent);
+        color: var(--accent-text);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        white-space: nowrap;
+        border-radius: var(--radius-pill);
+        font-weight: 500;
+        font-size: 16px;
+        line-height: 1;
+        padding: 16px 28px;
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition: transform 160ms var(--ease-out), background-color 180ms var(--ease-out), border-color 180ms var(--ease-out);
+      }
+
+      .btn:active {
+        transform: scale(0.97);
+      }
+
+      .btn-sm {
+        padding: 11px 20px;
+        font-size: 15px;
+      }
+
+      .btn-full {
+        width: 100%;
+        padding-block: 18px;
+        font-size: 17px;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: var(--accent-text);
+      }
+
+      @media (hover: hover) and (pointer: fine) {
+        .btn-primary:hover {
+          background: var(--accent-hover);
+        }
+      }
+
+      .btn-ghost {
+        background: transparent;
+        border-color: var(--border-strong);
+        color: var(--text-primary);
+      }
+
+      @media (hover: hover) and (pointer: fine) {
+        .btn-ghost:hover {
+          background: var(--surface);
+        }
+      }
+
+      /* Typography Helpers */
+      .section-title {
+        font-size: clamp(2.5rem, 4.7vw, 4rem);
+        font-weight: 700;
+        letter-spacing: -0.035em;
+        line-height: 1.04;
+      }
+
+      .section-sub {
+        font-size: 18px;
+        color: var(--text-secondary);
+        line-height: 1.55;
+        max-width: 42ch;
+        margin-top: 16px;
+      }
+
+      /* SECTION 1: Asymmetric Split Hero */
+      .hero {
+        position: relative;
+        min-height: 100dvh;
+        padding-top: 84px;
+        padding-bottom: 40px;
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+      }
+
+      .hero-canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      .hero-grid {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        align-items: center;
+        gap: clamp(32px, 5vw, 72px);
+      }
+
+      .hero-copy {
+        max-width: 580px;
+      }
+
+      .hero-title {
+        font-size: clamp(3.4rem, 6.4vw, 6rem);
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        line-height: 0.98;
+      }
+
+      .hero-sub {
+        font-size: clamp(1.15rem, 1.45vw, 1.35rem);
+        color: var(--text-secondary);
+        line-height: 1.55;
+        margin-top: 22px;
+        max-width: 42ch;
+      }
+
+      .hero-actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 32px;
+      }
+
+      .hero-stage {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        perspective: 1200px;
+      }
+
+      .flask-tilt-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: auto;
+        transform-style: preserve-3d;
+        will-change: transform;
+      }
+
+      .flask-hero-img {
+        position: relative;
+        z-index: 1;
+        width: auto;
+        height: min(60dvh, 520px);
+        max-width: 100%;
+        object-fit: contain;
+        background: transparent;
+        filter: drop-shadow(0 28px 42px rgba(5, 8, 7, 0.36));
+        transition: filter 320ms var(--ease-out);
+        user-select: none;
+      }
+
+      :root[data-theme='dark'] .flask-hero-img {
+        filter: drop-shadow(0 30px 48px rgba(0, 0, 0, 0.65));
+      }
+
+      /* Finish CSS color-calibration filters preserving studio highlights & logo */
+      .flask-hero-img[data-finish='basalt'],
+      .order-flask-img[data-finish='basalt'],
+      .bag-item-thumb[data-finish='basalt'] {
+        filter: saturate(0.14) brightness(0.68) contrast(1.18) drop-shadow(0 28px 42px rgba(5, 8, 7, 0.5));
+      }
+
+      .flask-hero-img[data-finish='glacier'],
+      .order-flask-img[data-finish='glacier'],
+      .bag-item-thumb[data-finish='glacier'] {
+        filter: saturate(0.08) brightness(1.38) contrast(1.08) drop-shadow(0 28px 42px rgba(5, 8, 7, 0.34));
+      }
+
+      .flask-shadow {
+        width: 180px;
+        height: 22px;
+        margin-top: -10px;
+        border-radius: 50%;
+        background: radial-gradient(ellipse at center, rgba(5, 8, 7, 0.42) 0%, transparent 72%);
+        filter: blur(8px);
+      }
+
+      .hero-swatches {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 26px;
+        padding: 6px;
+        max-width: 100%;
+        border-radius: var(--radius-pill);
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        backdrop-filter: blur(16px);
+      }
+
+      .swatch-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        border-radius: var(--radius-pill);
+        border: 1px solid transparent;
+        background: transparent;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        transition: background-color 180ms var(--ease-out), color 180ms var(--ease-out), border-color 180ms var(--ease-out), transform 140ms var(--ease-out);
+      }
+
+      .swatch-btn:active {
+        transform: scale(0.96);
+      }
+
+      .swatch-btn.is-active {
+        background: var(--surface-elevated);
+        border-color: var(--border-strong);
+        color: var(--text-primary);
+      }
+
+      .swatch-dot {
+        width: 12px;
+        height: 12px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+      }
+
+      /* SECTION 2: Pinned 360-Style Multi-Angle Environmental Showcase */
+      .showcase-pin {
+        position: relative;
+        width: 100%;
+        min-height: 100dvh;
+      }
+
+      .showcase-viewport {
+        position: relative;
+        width: 100%;
+        height: 100dvh;
+        overflow: hidden;
+        background: var(--surface);
+      }
+
+      .showcase-viewport::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        pointer-events: none;
+        background: linear-gradient(
+          to top,
+          rgba(10, 14, 12, 0.72) 0%,
+          rgba(10, 14, 12, 0.28) 38%,
+          transparent 70%
+        );
+      }
+
+      .showcase-frames {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+
+      .showcase-frame {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        clip-path: inset(0 0 0 100%);
+        will-change: clip-path, transform;
+      }
+
+      .showcase-frame.is-active {
+        clip-path: inset(0 0 0 0);
+      }
+
+      .showcase-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: right 0%;
+      }
+
+      .showcase-hud {
+        position: absolute;
+        bottom: clamp(28px, 4.5vw, 56px);
+        left: clamp(20px, 4vw, 52px);
+        right: clamp(20px, 4vw, 52px);
+        z-index: 5;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+      }
+
+      .showcase-caption {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-width: 620px;
+        color: #f4f6f5;
+        transition: filter 220ms var(--ease-out), opacity 220ms var(--ease-out);
+      }
+
+      .showcase-caption.is-blurring {
+        filter: blur(3px);
+        opacity: 0.65;
+      }
+
+      .caption-title {
+        font-size: clamp(2.5rem, 5.2vw, 4.75rem);
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        line-height: 0.98;
+      }
+
+      .caption-sub {
+        font-size: clamp(1.1rem, 1.5vw, 1.35rem);
+        color: rgba(244, 246, 245, 0.88);
+        line-height: 1.4;
+      }
+
+      .showcase-dots {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: var(--radius-pill);
+        background: rgba(18, 24, 21, 0.65);
+        border: 1px solid rgba(239, 243, 241, 0.18);
+        backdrop-filter: blur(20px);
+      }
+
+      .stage-dot {
+        width: 24px;
+        height: 6px;
+        border-radius: var(--radius-pill);
+        border: none;
+        background: rgba(239, 243, 241, 0.35);
+        cursor: pointer;
+        transition: width 240ms var(--ease-out), background-color 240ms var(--ease-out);
+      }
+
+      .stage-dot.is-active {
+        width: 44px;
+        background: #f4f6f5;
+      }
+
+      /* SECTION 3: Interactive Thermal Comparison Slider */
+      .thermal-section {
+        padding-block: clamp(88px, 12vw, 150px);
+      }
+
+      .thermal-grid {
+        display: grid;
+        grid-template-columns: 1.35fr 1fr;
+        align-items: center;
+        gap: clamp(32px, 5vw, 72px);
+      }
+
+      .comparison-wrap {
+        position: relative;
+        aspect-ratio: 16 / 10;
+        border-radius: var(--radius-card);
+        overflow: hidden;
+        border: 1px solid var(--border);
+        user-select: none;
+        touch-action: pan-y;
+        cursor: ew-resize;
+      }
+
+      .comparison-layer {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .comparison-cold {
+        clip-path: inset(0 50% 0 0);
+        will-change: clip-path;
+      }
+
+      .comparison-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .comparison-handle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 4;
+        outline: none;
+      }
+
+      .handle-line {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #eff3f1;
+        box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
+        transition: opacity 240ms var(--ease-out);
+      }
+
+      .handle-knob {
+        position: relative;
+        z-index: 2;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--text-primary);
+        color: var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        transition: transform 160ms var(--ease-out), opacity 240ms var(--ease-out);
+      }
+
+      .comparison-handle.is-edge .handle-line {
+        opacity: 0;
+      }
+
+      .comparison-handle.is-edge .handle-knob {
+        opacity: 0.78;
+      }
+
+      .comparison-handle:active .handle-knob {
+        transform: scale(0.94);
+      }
+
+      .thermal-copy {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .segmented-control {
+        display: inline-flex;
+        padding: 5px;
+        border-radius: var(--radius-pill);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        margin-top: 28px;
+      }
+
+      .seg-btn {
+        padding: 11px 22px;
+        border-radius: var(--radius-pill);
+        border: none;
+        background: transparent;
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: background-color 200ms var(--ease-out), color 200ms var(--ease-out), transform 140ms var(--ease-out);
+      }
+
+      .seg-btn:active {
+        transform: scale(0.97);
+      }
+
+      .seg-btn.is-active {
+        background: var(--accent);
+        color: var(--accent-text);
+      }
+
+      .thermal-metrics {
+        display: flex;
+        gap: 36px;
+        margin-top: 32px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border);
+        width: 100%;
+      }
+
+      .metric-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .metric-value {
+        font-family: var(--font-mono);
+        font-size: 31px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .metric-label {
+        font-size: 15px;
+        color: var(--text-secondary);
+      }
+
+      /* SECTION 4: Asymmetric 3-Tile Editorial Bento */
+      .bento-section {
+        padding-block: clamp(72px, 10vw, 130px);
+      }
+
+      .section-header-stack {
+        margin-bottom: 40px;
+      }
+
+      .bento-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        grid-template-rows: repeat(2, minmax(260px, 320px));
+        gap: 20px;
+      }
+
+      .bento-tile {
+        position: relative;
+        border-radius: var(--radius-card);
+        overflow: hidden;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+      }
+
+      .bento-tall {
+        grid-column: span 7;
+        grid-row: span 2;
+      }
+
+      .bento-top {
+        grid-column: span 5;
+        grid-row: span 1;
+      }
+
+      .bento-bottom {
+        grid-column: span 5;
+        grid-row: span 1;
+        background: var(--surface-elevated);
+      }
+
+      .bento-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 600ms var(--ease-out);
+      }
+
+      @media (hover: hover) and (pointer: fine) {
+        .bento-tile:hover .bento-img {
+          transform: scale(1.03);
+        }
+      }
+
+      .specs-canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .bento-footer {
+        position: relative;
+        z-index: 2;
+        padding: 28px 30px;
+        background: linear-gradient(to top, rgba(12, 16, 14, 0.84) 0%, rgba(12, 16, 14, 0.36) 62%, transparent 100%);
+        color: #eff3f1;
+      }
+
+      .bento-footer-specs {
+        background: none;
+        color: var(--text-primary);
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+      }
+
+      .bento-title {
+        font-size: clamp(1.5rem, 2.2vw, 2rem);
+        font-weight: 700;
+        letter-spacing: -0.025em;
+        line-height: 1.08;
+      }
+
+      .bento-sub {
+        font-size: 16px;
+        opacity: 0.85;
+        margin-top: 6px;
+      }
+
+      .spec-badge {
+        font-family: var(--font-mono);
+        font-size: 14px;
+        padding: 7px 14px;
+        border-radius: var(--radius-pill);
+        border: 1px solid var(--border-strong);
+        background: var(--glass-bg);
+      }
+
+      /* SECTION 5: Interactive Finish & Size Configurator + Order */
+      .order-section {
+        padding-block: clamp(88px, 12vw, 150px);
+      }
+
+      .order-grid {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        align-items: center;
+        gap: clamp(32px, 5vw, 80px);
+      }
+
+      .order-preview {
+        position: relative;
+        aspect-ratio: 4 / 5;
+        border-radius: var(--radius-card);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .order-plinth {
+        position: absolute;
+        bottom: 12%;
+        width: 240px;
+        height: 36px;
+        border-radius: 50%;
+        background: radial-gradient(ellipse at center, rgba(72, 99, 75, 0.32) 0%, transparent 72%);
+        filter: blur(10px);
+      }
+
+      .order-flask-img {
+        position: relative;
+        z-index: 2;
+        width: auto;
+        height: 76%;
+        max-width: 58%;
+        object-fit: contain;
+        background: transparent;
+        filter: drop-shadow(0 28px 44px rgba(5, 8, 7, 0.36));
+        transition: transform 360ms var(--ease-out), filter 280ms var(--ease-out);
+      }
+
+      .order-panel {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .order-price {
+        font-family: var(--font-mono);
+        font-size: 26px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        margin-top: 8px;
+      }
+
+      .config-group {
+        margin-top: 28px;
+      }
+
+      .config-label {
+        display: block;
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        margin-bottom: 12px;
+      }
+
+      .option-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .pill-option {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        border-radius: var(--radius-pill);
+        border: 1px solid var(--border);
+        background: var(--surface);
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: border-color 160ms var(--ease-out), background-color 160ms var(--ease-out), transform 140ms var(--ease-out);
+      }
+
+      .pill-option:active {
+        transform: scale(0.97);
+      }
+
+      .pill-option.is-active {
+        border-color: var(--accent);
+        background: var(--surface-elevated);
+      }
+
+      .pill-option .dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+      }
+
+      .spec-list {
+        margin-block: 32px;
+        border-top: 1px solid var(--border);
+      }
+
+      .spec-row {
+        display: flex;
+        justify-content: space-between;
+        padding-block: 14px;
+        border-bottom: 1px solid var(--border);
+        font-size: 16px;
+      }
+
+      .spec-key {
+        color: var(--text-secondary);
+      }
+
+      .spec-val {
+        font-weight: 500;
+      }
+
+      /* Minimal Single-Row Footer */
+      .site-footer {
+        border-top: 1px solid var(--border);
+        padding-block: 28px;
+      }
+
+      .footer-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 15px;
+        color: var(--text-secondary);
+      }
+
+      .footer-brand {
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+
+      /* Slide-Over Order Bag Drawer */
+      .drawer-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 70;
+        background: rgba(5, 8, 7, 0.6);
+        backdrop-filter: blur(4px);
+        opacity: 1;
+        transition: opacity 260ms var(--ease-out);
+      }
+
+      .drawer-backdrop[hidden] {
+        opacity: 0;
+      }
+
+      .bag-drawer {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(400px, 100vw);
+        z-index: 80;
+        background: var(--surface);
+        border-left: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        transform: translateX(0);
+        transition: transform 340ms var(--ease-drawer);
+      }
+
+      .bag-drawer[hidden] {
+        transform: translateX(100%);
+      }
+
+      @starting-style {
+        .bag-drawer {
+          transform: translateX(100%);
+        }
+        .drawer-backdrop {
+          opacity: 0;
+        }
+      }
+
+      .drawer-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .drawer-title {
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .drawer-body {
+        flex: 1;
+        padding: 24px;
+        overflow-y: auto;
+      }
+
+      .drawer-empty {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        font-size: 16px;
+        color: var(--text-secondary);
+        text-align: center;
+      }
+
+      .bag-item {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding-bottom: 18px;
+        margin-bottom: 18px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .bag-item-thumb {
+        width: 56px;
+        height: 78px;
+        object-fit: contain;
+        border-radius: 8px;
+        background: var(--bg);
+        padding: 6px;
+      }
+
+      .bag-item-info {
+        flex: 1;
+      }
+
+      .bag-item-name {
+        font-weight: 700;
+        font-size: 17px;
+      }
+
+      .bag-item-meta {
+        font-size: 15px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+      }
+
+      .bag-qty-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .qty-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: 1px solid var(--border-strong);
+        background: transparent;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        transition: transform 140ms var(--ease-out);
+      }
+
+      .qty-btn:active {
+        transform: scale(0.92);
+      }
+
+      .bag-qty {
+        font-size: 15px;
+        font-weight: 500;
+      }
+
+      .drawer-footer {
+        padding: 20px 24px 28px;
+        border-top: 1px solid var(--border);
+      }
+
+      .drawer-total-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 16px;
+      }
+
+      .drawer-total {
+        font-family: var(--font-mono);
+      }
+
+      /* Mobile Responsive Collapse (< 768px) */
+      @media (max-width: 768px) {
+        .nav-link {
+          display: none;
+        }
+
+        .hero-grid,
+        .thermal-grid,
+        .order-grid {
+          grid-template-columns: 1fr;
+          gap: 36px;
+        }
+
+        .hero-copy {
+          order: 1;
+          min-width: 0;
+        }
+
+        .hero-stage {
+          order: 2;
+          min-width: 0;
+          width: 100%;
+        }
+
+        .hero-swatches {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 4px;
+          padding: 5px;
+          width: fit-content;
+          max-width: 100%;
+          border-radius: 24px;
+        }
+
+        .swatch-btn {
+          gap: 6px;
+          padding: 7px 10px;
+          font-size: 12.5px;
+        }
+
+        .swatch-dot {
+          width: 9px;
+          height: 9px;
+        }
+
+        .bento-grid {
+          grid-template-columns: 1fr;
+          grid-template-rows: auto;
+        }
+
+        .bento-tall,
+        .bento-top,
+        .bento-bottom {
+          grid-column: span 1;
+          grid-row: span 1;
+          min-height: 300px;
+        }
+
+        .showcase-hud {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .footer-inner {
+          flex-direction: column;
+          gap: 8px;
+          text-align: center;
+        }
+      }
+
+      @media (max-aspect-ratio: 3 / 4) {
+        .showcase-img {
+          object-position: 72% 0%;
+        }
+      }
+
+      /* Reduced Motion Respect */
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+
+        .flask-tilt-wrap {
+          transform: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grain-overlay" aria-hidden="true"></div>
+
+    <header class="site-header" id="site-header">
+      <div class="container header-inner">
+        <a href="#hero" class="brand-lockup" aria-label="Material Flask Home">
+          <svg
+            class="brand-mark"
+            width="24"
+            height="15"
+            viewBox="0 0 28 18"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M2 16L10.5 3L16 11.5L19.5 6.5L26 16H2Z"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <span class="brand-wordmark">Material</span>
+        </a>
+
+        <nav class="header-nav" aria-label="Primary">
+          <a href="#showcase" class="nav-link">Showcase</a>
+          <a href="#craft" class="nav-link">Specs</a>
+          <button
+            type="button"
+            class="icon-btn theme-toggle"
+            id="theme-toggle"
+            aria-label="Toggle color theme"
+            title="Switch light or dark theme"
+          >
+            <svg
+              id="theme-icon-sun"
+              width="19"
+              height="19"
+              viewBox="0 0 256 256"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle cx="128" cy="128" r="56" stroke="currentColor" stroke-width="18" />
+              <line x1="128" y1="24" x2="128" y2="44" stroke="currentColor" stroke-width="18" stroke-linecap="round" />
+              <line x1="128" y1="212" x2="128" y2="232" stroke="currentColor" stroke-width="18" stroke-linecap="round" />
+              <line x1="24" y1="128" x2="44" y2="128" stroke="currentColor" stroke-width="18" stroke-linecap="round" />
+              <line x1="212" y1="128" x2="232" y2="128" stroke="currentColor" stroke-width="18" stroke-linecap="round" />
+              <line x1="54" y1="54" x2="68" y2="68" stroke="currentColor" stroke-width="18" stroke-linecap="round" />
+              <line x1="188" y1="188" x2="202" y2="202" stroke="currentColor" stroke-width="18" stroke-linecap="round" />
+              <line x1="54" y1="202" x2="68" y2="188" stroke="currentColor" stroke-width="18" stroke-linecap="round" />
+              <line x1="188" y1="68" x2="202" y2="54" stroke="currentColor" stroke-width="18" stroke-linecap="round" />
+            </svg>
+            <svg
+              id="theme-icon-moon"
+              width="19"
+              height="19"
+              viewBox="0 0 256 256"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M210.69 158.18A96.78 96.78 0 0 1 192 160 96.11 96.11 0 0 1 96 64a96.78 96.78 0 0 1 1.82-18.69A96.04 96.04 0 1 0 210.69 158.18Z"
+                stroke="currentColor"
+                stroke-width="18"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="icon-btn bag-trigger"
+            id="bag-trigger"
+            aria-label="Open order bag"
+          >
+            <svg
+              width="19"
+              height="19"
+              viewBox="0 0 256 256"
+              fill="none"
+              aria-hidden="true"
+            >
+              <rect
+                x="32"
+                y="72"
+                width="192"
+                height="144"
+                rx="16"
+                stroke="currentColor"
+                stroke-width="18"
+              />
+              <path
+                d="M88 72V64a40 40 0 0 1 80 0v8"
+                stroke="currentColor"
+                stroke-width="18"
+                stroke-linecap="round"
+              />
+            </svg>
+            <span class="bag-count" id="bag-count">0</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <!-- SECTION 1: Asymmetric Split Hero -->
+      <section id="hero" class="hero">
+        <canvas
+          id="hero-gl-canvas"
+          class="hero-canvas"
+          aria-hidden="true"
+        ></canvas>
+
+        <div class="container hero-grid">
+          <div class="hero-copy">
+            <h1 class="hero-title">Built for altitude.</h1>
+            <p class="hero-sub">
+              A sturdy stainless steel bottle made for long trail days and
+              everyday commutes, keeping drinks cold or steaming without ever
+              sweating in your bag.
+            </p>
+
+            <div class="hero-actions">
+              <a href="#order" class="btn btn-primary magnetic-btn">Shop Flask</a>
+              <a href="#showcase" class="btn btn-ghost">
+                Explore
+                <svg
+                  width="17"
+                  height="17"
+                  viewBox="0 0 256 256"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <line
+                    x1="64"
+                    y1="64"
+                    x2="192"
+                    y2="192"
+                    stroke="currentColor"
+                    stroke-width="20"
+                    stroke-linecap="round"
+                  />
+                  <polyline
+                    points="88 192 192 192 192 88"
+                    stroke="currentColor"
+                    stroke-width="20"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          <div class="hero-stage" id="hero-stage">
+            <div class="flask-tilt-wrap" id="flask-tilt-wrap">
+              <img
+                src="https://www.gstatic.com/aistudio/starter-apps/flask-applet/flask-cutout.webp"
+                alt="Material Flask 950 ml in matte olive-sage green powder coat with black chug lid"
+                class="flask-hero-img"
+                id="hero-flask-img"
+                data-finish="sage"
+                width="519"
+                height="940"
+              />
+            </div>
+            <div class="flask-shadow" id="flask-shadow" aria-hidden="true"></div>
+
+            <div
+              class="hero-swatches"
+              id="hero-swatches"
+              role="radiogroup"
+              aria-label="Select flask finish"
+            >
+              <button
+                type="button"
+                role="radio"
+                class="swatch-btn is-active"
+                data-finish="sage"
+                aria-checked="true"
+                aria-label="Alpine Sage finish"
+              >
+                <span class="swatch-dot" style="background: #48634B"></span>
+                <span class="swatch-label">Alpine Sage</span>
+              </button>
+              <button
+                type="button"
+                role="radio"
+                class="swatch-btn"
+                data-finish="basalt"
+                aria-checked="false"
+                aria-label="Basalt Black finish"
+              >
+                <span class="swatch-dot" style="background: #222624"></span>
+                <span class="swatch-label">Basalt Black</span>
+              </button>
+              <button
+                type="button"
+                role="radio"
+                class="swatch-btn"
+                data-finish="glacier"
+                aria-checked="false"
+                aria-label="Glacier Silver finish"
+              >
+                <span class="swatch-dot" style="background: #B4BDB8"></span>
+                <span class="swatch-label">Glacier Silver</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 2: Pinned 4-Angle Environmental Showcase -->
+      <section id="showcase" class="showcase-pin">
+        <div class="showcase-viewport" id="showcase-viewport">
+          <div class="showcase-frames" id="showcase-frames">
+            <figure class="showcase-frame is-active" data-index="0">
+              <img
+                src="https://www.gstatic.com/aistudio/starter-apps/flask-applet/flask-showcase-studio.webp"
+                alt="Material Flask standing on honed dark basalt slate in an architectural studio"
+                class="showcase-img"
+              />
+            </figure>
+            <figure class="showcase-frame" data-index="1">
+              <img
+                src="https://www.gstatic.com/aistudio/starter-apps/flask-applet/flask-showcase-river.webp"
+                alt="Material Flask on a sunlit cedar picnic table beside a clear mountain river"
+                class="showcase-img"
+              />
+            </figure>
+            <figure class="showcase-frame" data-index="2">
+              <img
+                src="https://www.gstatic.com/aistudio/starter-apps/flask-applet/flask-showcase-trail.webp"
+                alt="Material Flask resting on a sunlit granite boulder overlooking golden alpine meadows"
+                class="showcase-img"
+              />
+            </figure>
+            <figure class="showcase-frame" data-index="3">
+              <img
+                src="https://www.gstatic.com/aistudio/starter-apps/flask-applet/flask-showcase-lake.webp"
+                alt="Material Flask on a stone lakeside dock at dusk overlooking calm alpine water"
+                class="showcase-img"
+              />
+            </figure>
+          </div>
+
+          <div class="showcase-hud">
+            <div class="showcase-caption" id="showcase-caption">
+              <h2 class="caption-title" id="caption-title">Alpine Sage Matte</h2>
+              <p class="caption-sub" id="caption-sub">
+                Powder-coated 18/8 stainless steel
+              </p>
+            </div>
+
+            <div
+              class="showcase-dots"
+              id="showcase-dots"
+              role="tablist"
+              aria-label="Showcase angles"
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected="true"
+                class="stage-dot is-active"
+                data-stage="0"
+                aria-label="Angle 1"
+              ></button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected="false"
+                class="stage-dot"
+                data-stage="1"
+                aria-label="Angle 2"
+              ></button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected="false"
+                class="stage-dot"
+                data-stage="2"
+                aria-label="Angle 3"
+              ></button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected="false"
+                class="stage-dot"
+                data-stage="3"
+                aria-label="Angle 4"
+              ></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3: Interactive Thermal Comparison Slider -->
+      <section id="thermal" class="thermal-section">
+        <div class="container thermal-grid">
+          <div class="comparison-wrap" id="comparison-wrap">
+            <div class="comparison-layer comparison-hot">
+              <img
+                src="https://www.gstatic.com/aistudio/starter-apps/flask-applet/flask-thermal-hot.webp"
+                alt="Material Flask in warm alpine sunrise light"
+                class="comparison-img"
+              />
+            </div>
+
+            <div class="comparison-layer comparison-cold" id="comparison-cold">
+              <img
+                src="https://www.gstatic.com/aistudio/starter-apps/flask-applet/flask-thermal-cold.webp"
+                alt="Material Flask dry on frost-covered alpine ledge in sub-zero air"
+                class="comparison-img"
+              />
+            </div>
+
+            <div
+              class="comparison-handle"
+              id="comparison-handle"
+              role="slider"
+              tabindex="0"
+              aria-label="Compare cold and hot insulation"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="50"
+            >
+              <div class="handle-line"></div>
+              <div class="handle-knob">
+                <svg
+                  width="19"
+                  height="19"
+                  viewBox="0 0 256 256"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <polyline
+                    points="176 144 208 176 176 208"
+                    stroke="currentColor"
+                    stroke-width="20"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <line
+                    x1="48"
+                    y1="176"
+                    x2="208"
+                    y2="176"
+                    stroke="currentColor"
+                    stroke-width="20"
+                    stroke-linecap="round"
+                  />
+                  <polyline
+                    points="80 112 48 80 80 48"
+                    stroke="currentColor"
+                    stroke-width="20"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <line
+                    x1="208"
+                    y1="80"
+                    x2="48"
+                    y2="80"
+                    stroke="currentColor"
+                    stroke-width="20"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="thermal-copy">
+            <h2 class="section-title">Icy cold or piping hot.</h2>
+            <p class="section-sub">
+              Thick double-wall steel keeps water icy for 24 hours and morning
+              coffee steaming for 12, while the outside stays completely dry.
+            </p>
+
+            <div
+              class="segmented-control"
+              id="thermal-segmented"
+              role="tablist"
+              aria-label="Thermal performance"
+            >
+              <button
+                type="button"
+                role="tab"
+                class="seg-btn"
+                data-split="100"
+                aria-selected="false"
+              >
+                24h Cold
+              </button>
+              <button
+                type="button"
+                role="tab"
+                class="seg-btn"
+                data-split="0"
+                aria-selected="false"
+              >
+                12h Hot
+              </button>
+            </div>
+
+            <div class="thermal-metrics">
+              <div class="metric-item">
+                <span class="metric-value">4°C</span>
+                <span class="metric-label">Cold retention</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-value">85°C</span>
+                <span class="metric-label">Heat retention</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 4: Asymmetric 3-Tile Editorial Bento -->
+      <section id="craft" class="bento-section">
+        <div class="container">
+          <div class="section-header-stack">
+            <h2 class="section-title">Engineered to endure.</h2>
+          </div>
+
+          <div class="bento-grid" id="bento-grid">
+            <article class="bento-tile bento-tall reveal-tile">
+              <img
+                src="https://www.gstatic.com/aistudio/starter-apps/flask-applet/flask-bento-lid.webp"
+                alt="Close-up of threaded black chug cap and brushed steel neck"
+                class="bento-img"
+              />
+              <div class="bento-footer">
+                <h3 class="bento-title">Leakproof Chug Lid</h3>
+                <p class="bento-sub">
+                  Dual-threaded seal with integrated carry loop
+                </p>
+              </div>
+            </article>
+
+            <article class="bento-tile bento-top reveal-tile">
+              <img
+                src="https://www.gstatic.com/aistudio/starter-apps/flask-applet/flask-bento-sunny.webp"
+                alt="Matte olive-sage green powder coat resting on sunlit trail timber"
+                class="bento-img"
+              />
+              <div class="bento-footer">
+                <h3 class="bento-title">Powder Coat</h3>
+                <p class="bento-sub">Tactile matte grip that never slips wet</p>
+              </div>
+            </article>
+
+            <article class="bento-tile bento-bottom reveal-tile">
+              <canvas
+                id="specs-gl-canvas"
+                class="specs-canvas"
+                aria-hidden="true"
+              ></canvas>
+              <div class="bento-footer bento-footer-specs">
+                <div>
+                  <h3 class="bento-title">950 ml</h3>
+                  <p class="bento-sub">520 g empty weight</p>
+                </div>
+                <span class="spec-badge">18/8 Steel</span>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 5: Interactive Finish & Size Configurator + Order -->
+      <section id="order" class="order-section">
+        <div class="container order-grid">
+          <div class="order-preview" id="order-preview">
+            <div class="order-plinth" aria-hidden="true"></div>
+            <img
+              src="https://www.gstatic.com/aistudio/starter-apps/flask-applet/flask-order-cutout.webp"
+              alt="Configured Material Flask three-quarter preview"
+              class="order-flask-img"
+              id="order-flask-img"
+              data-finish="sage"
+              width="519"
+              height="940"
+              style="transform: scale(1)"
+            />
+          </div>
+
+          <div class="order-panel">
+            <h2 class="section-title">Material Flask</h2>
+            <p class="order-price" id="order-price">$48</p>
+
+            <div class="config-group">
+              <span class="config-label">Finish</span>
+              <div class="option-row" id="order-finish-row">
+                <button
+                  type="button"
+                  class="pill-option is-active"
+                  data-finish="sage"
+                >
+                  <span class="dot" style="background: #48634B"></span>
+                  Alpine Sage
+                </button>
+                <button
+                  type="button"
+                  class="pill-option"
+                  data-finish="basalt"
+                >
+                  <span class="dot" style="background: #222624"></span>
+                  Basalt Black
+                </button>
+                <button
+                  type="button"
+                  class="pill-option"
+                  data-finish="glacier"
+                >
+                  <span class="dot" style="background: #B4BDB8"></span>
+                  Glacier Silver
+                </button>
+              </div>
+            </div>
+
+            <div class="config-group">
+              <span class="config-label">Capacity</span>
+              <div class="option-row" id="order-size-row">
+                <button
+                  type="button"
+                  class="pill-option"
+                  data-size="750 ml"
+                  data-price="42"
+                  data-scale="0.94"
+                >
+                  750 ml
+                </button>
+                <button
+                  type="button"
+                  class="pill-option is-active"
+                  data-size="950 ml"
+                  data-price="48"
+                  data-scale="1"
+                >
+                  950 ml
+                </button>
+                <button
+                  type="button"
+                  class="pill-option"
+                  data-size="1.2 L"
+                  data-price="54"
+                  data-scale="1.06"
+                >
+                  1.2 L
+                </button>
+              </div>
+            </div>
+
+            <div class="spec-list">
+              <div class="spec-row">
+                <span class="spec-key">Insulation</span>
+                <span class="spec-val">24h cold, 12h hot</span>
+              </div>
+              <div class="spec-row">
+                <span class="spec-key">Steel</span>
+                <span class="spec-val">18/8 pro-grade double wall</span>
+              </div>
+              <div class="spec-row">
+                <span class="spec-key">Warranty</span>
+                <span class="spec-val">Lifetime replacement</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-primary btn-full magnetic-btn"
+              id="add-to-bag-btn"
+            >
+              <span class="btn-label" id="add-to-bag-label">
+                Add to Bag - $48
+              </span>
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <span class="footer-brand">Material</span>
+        <span class="footer-tag">Built for altitude.</span>
+        <span class="footer-copy">© 2026 Material</span>
+      </div>
+    </footer>
+
+    <!-- Slide-Over Order Bag Drawer -->
+    <div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
+    <aside
+      class="bag-drawer"
+      id="bag-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="drawer-title"
+      hidden
+    >
+      <div class="drawer-header">
+        <h2 id="drawer-title" class="drawer-title">Bag</h2>
+        <button
+          type="button"
+          class="icon-btn"
+          id="drawer-close"
+          aria-label="Close bag"
+        >
+          <svg
+            width="19"
+            height="19"
+            viewBox="0 0 256 256"
+            fill="none"
+            aria-hidden="true"
+          >
+            <line
+              x1="200"
+              y1="56"
+              x2="56"
+              y2="200"
+              stroke="currentColor"
+              stroke-width="20"
+              stroke-linecap="round"
+            />
+            <line
+              x1="200"
+              y1="200"
+              x2="56"
+              y2="56"
+              stroke="currentColor"
+              stroke-width="20"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <div class="drawer-body" id="drawer-body">
+        <div class="drawer-empty" id="drawer-empty">
+          <p>Your bag is empty.</p>
+          <a
+            href="#order"
+            class="btn btn-primary btn-sm"
+            id="drawer-empty-cta"
+          >
+            Select Flask
+          </a>
+        </div>
+
+        <div class="drawer-items" id="drawer-items" hidden></div>
+      </div>
+
+      <div class="drawer-footer" id="drawer-footer" hidden>
+        <div class="drawer-total-row">
+          <span>Total</span>
+          <span class="drawer-total" id="drawer-total">$0</span>
+        </div>
+        <button
+          type="button"
+          class="btn btn-primary btn-full"
+          id="checkout-btn"
+        >
+          Checkout
+        </button>
+      </div>
+    </aside>
+
+    <!-- GSAP, ScrollTrigger & Lenis -->
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.min.js"></script>
+
+    <script>
+      (function () {
+        'use strict';
+
+        // 1. Procedural WebGL2 Alpine Light & Topographic Mist Shader
+        function initHeroCanvas(canvas) {
+          if (!canvas) return function () {};
+          var gl = canvas.getContext('webgl2', {
+            alpha: true,
+            antialias: false,
+            powerPreference: 'low-power',
+          });
+          if (!gl) return function () {};
+
+          var vsSource =
+            '#version 300 es\n' +
+            'in vec2 a_pos;\n' +
+            'out vec2 v_uv;\n' +
+            'void main() {\n' +
+            '  v_uv = a_pos * 0.5 + 0.5;\n' +
+            '  gl_Position = vec4(a_pos, 0.0, 1.0);\n' +
+            '}';
+
+          var fsSource =
+            '#version 300 es\n' +
+            'precision highp float;\n' +
+            'in vec2 v_uv;\n' +
+            'out vec4 outColor;\n' +
+            'uniform float u_time;\n' +
+            'uniform vec2 u_mouse;\n' +
+            'uniform vec2 u_res;\n' +
+            'uniform float u_isDark;\n' +
+            'float hash(vec2 p) {\n' +
+            '  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);\n' +
+            '}\n' +
+            'float noise(vec2 p) {\n' +
+            '  vec2 i = floor(p);\n' +
+            '  vec2 f = fract(p);\n' +
+            '  f = f * f * (3.0 - 2.0 * f);\n' +
+            '  float a = hash(i);\n' +
+            '  float b = hash(i + vec2(1.0, 0.0));\n' +
+            '  float c = hash(i + vec2(0.0, 1.0));\n' +
+            '  float d = hash(i + vec2(1.0, 1.0));\n' +
+            '  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);\n' +
+            '}\n' +
+            'void main() {\n' +
+            '  vec2 uv = v_uv;\n' +
+            '  float aspect = u_res.x / max(u_res.y, 1.0);\n' +
+            '  vec2 p = (uv - 0.5) * vec2(aspect, 1.0);\n' +
+            '  float n1 = noise(p * 2.4 + vec2(u_time * 0.04, -u_time * 0.025));\n' +
+            '  float n2 = noise(p * 5.2 - vec2(u_time * 0.03, u_time * 0.02));\n' +
+            '  float elev = n1 * 0.65 + n2 * 0.35;\n' +
+            '  float contour = abs(fract(elev * 9.0) - 0.5);\n' +
+            '  float line = smoothstep(0.47, 0.495, contour);\n' +
+            '  vec2 mPos = (u_mouse - 0.5) * vec2(aspect, 1.0);\n' +
+            '  float dist = length(p - mPos);\n' +
+            '  float glow = exp(-dist * dist * 2.4);\n' +
+            '  vec3 darkBg = vec3(0.047, 0.063, 0.055);\n' +
+            '  vec3 darkAccent = vec3(0.282, 0.388, 0.294);\n' +
+            '  vec3 lightBg = vec3(0.953, 0.965, 0.957);\n' +
+            '  vec3 lightAccent = vec3(0.239, 0.341, 0.251);\n' +
+            '  vec3 baseCol = mix(lightBg, darkBg, u_isDark);\n' +
+            '  vec3 sageCol = mix(lightAccent, darkAccent, u_isDark);\n' +
+            '  vec3 col = baseCol;\n' +
+            '  col = mix(col, sageCol, glow * (u_isDark > 0.5 ? 0.26 : 0.14));\n' +
+            '  col += sageCol * line * (u_isDark > 0.5 ? 0.085 : 0.055);\n' +
+            '  outColor = vec4(col, 1.0);\n' +
+            '}';
+
+          function compile(type, src) {
+            var sh = gl.createShader(type);
+            if (!sh) return null;
+            gl.shaderSource(sh, src);
+            gl.compileShader(sh);
+            if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+              gl.deleteShader(sh);
+              return null;
+            }
+            return sh;
+          }
+
+          var prog = gl.createProgram();
+          if (!prog) return function () {};
+          var vs = compile(gl.VERTEX_SHADER, vsSource);
+          var fs = compile(gl.FRAGMENT_SHADER, fsSource);
+          if (!vs || !fs) {
+            if (vs) gl.deleteShader(vs);
+            if (fs) gl.deleteShader(fs);
+            gl.deleteProgram(prog);
+            return function () {};
+          }
+          gl.attachShader(prog, vs);
+          gl.attachShader(prog, fs);
+          gl.linkProgram(prog);
+          if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+            gl.deleteShader(vs);
+            gl.deleteShader(fs);
+            gl.deleteProgram(prog);
+            return function () {};
+          }
+
+          var buf = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
+            gl.STATIC_DRAW
+          );
+
+          var aPos = gl.getAttribLocation(prog, 'a_pos');
+          var uTime = gl.getUniformLocation(prog, 'u_time');
+          var uMouse = gl.getUniformLocation(prog, 'u_mouse');
+          var uRes = gl.getUniformLocation(prog, 'u_res');
+          var uIsDark = gl.getUniformLocation(prog, 'u_isDark');
+
+          var mouseX = 0.68;
+          var mouseY = 0.48;
+          var targetX = 0.68;
+          var targetY = 0.48;
+          var rafId = 0;
+
+          function resize() {
+            if (!canvas) return;
+            var dpr = Math.min(window.devicePixelRatio || 1, 2);
+            var w = Math.floor(canvas.clientWidth * dpr);
+            var h = Math.floor(canvas.clientHeight * dpr);
+            if (canvas.width !== w || canvas.height !== h) {
+              canvas.width = w;
+              canvas.height = h;
+            }
+          }
+
+          function onPointerMove(e) {
+            var rect = canvas.getBoundingClientRect();
+            if (!rect.width || !rect.height) return;
+            targetX = (e.clientX - rect.left) / rect.width;
+            targetY = 1.0 - (e.clientY - rect.top) / rect.height;
+          }
+
+          window.addEventListener('pointermove', onPointerMove, { passive: true });
+          window.addEventListener('resize', resize, { passive: true });
+          resize();
+
+          var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          var start = performance.now();
+
+          function render(now) {
+            resize();
+            mouseX += (targetX - mouseX) * 0.08;
+            mouseY += (targetY - mouseY) * 0.08;
+
+            var isDark =
+              document.documentElement.getAttribute('data-theme') !== 'light' ? 1.0 : 0.0;
+            var t = prefersReduced ? 0.0 : (now - start) * 0.001;
+
+            gl.viewport(0, 0, canvas.width, canvas.height);
+            gl.useProgram(prog);
+            gl.enableVertexAttribArray(aPos);
+            gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+            gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+            gl.uniform1f(uTime, t);
+            gl.uniform2f(uMouse, mouseX, mouseY);
+            gl.uniform2f(uRes, canvas.width, canvas.height);
+            gl.uniform1f(uIsDark, isDark);
+
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+            if (!prefersReduced) {
+              rafId = requestAnimationFrame(render);
+            }
+          }
+
+          rafId = requestAnimationFrame(render);
+
+          return function () {
+            cancelAnimationFrame(rafId);
+            window.removeEventListener('pointermove', onPointerMove);
+            window.removeEventListener('resize', resize);
+          };
+        }
+
+        // 2. Interactive 3D Rotating Architectural Wireframe & Double-Wall Cross-Section
+        function initSpecsCanvas(canvas) {
+          if (!canvas) return function () {};
+          var ctx = canvas.getContext('2d');
+          if (!ctx) return function () {};
+
+          var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          var angle = 0;
+          var targetSpeed = 0.008;
+          var hoverBoost = 0;
+          var rafId = 0;
+
+          function resize() {
+            var dpr = Math.min(window.devicePixelRatio || 1, 2);
+            var w = Math.floor(canvas.clientWidth * dpr);
+            var h = Math.floor(canvas.clientHeight * dpr);
+            if (canvas.width !== w || canvas.height !== h) {
+              canvas.width = w;
+              canvas.height = h;
+            }
+          }
+
+          function onEnter() {
+            hoverBoost = 0.018;
+          }
+          function onLeave() {
+            hoverBoost = 0;
+          }
+
+          var parent = canvas.parentElement;
+          if (parent) {
+            parent.addEventListener('pointerenter', onEnter);
+            parent.addEventListener('pointerleave', onLeave);
+          }
+          window.addEventListener('resize', resize, { passive: true });
+          resize();
+
+          var rings = [
+            { y: -0.92, r: 0.44 },
+            { y: -0.82, r: 0.48 },
+            { y: 0.25, r: 0.48 },
+            { y: 0.44, r: 0.36 },
+            { y: 0.56, r: 0.34 },
+            { y: 0.62, r: 0.37 },
+            { y: 0.74, r: 0.37 },
+            { y: 0.86, r: 0.24 },
+            { y: 0.98, r: 0.24 },
+          ];
+
+          function draw() {
+            resize();
+            var w = canvas.width;
+            var h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            var isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+            var strokeMain = isDark
+              ? 'rgba(239, 243, 241, 0.28)'
+              : 'rgba(17, 22, 20, 0.24)';
+            var strokeAccent = isDark
+              ? 'rgba(82, 122, 90, 0.85)'
+              : 'rgba(61, 87, 64, 0.85)';
+
+            var cx = w * 0.68;
+            var cy = h * 0.46;
+            var scaleY = Math.min(w, h) * 0.36;
+            var scaleX = scaleY * 0.82;
+
+            if (!prefersReduced) {
+              angle += targetSpeed + hoverBoost;
+            }
+
+            ctx.lineWidth = Math.max(1.2, w / 420);
+            for (var i = 0; i < rings.length; i++) {
+              var ring = rings[i];
+              ctx.beginPath();
+              ctx.strokeStyle = i === 4 || i === 5 ? strokeAccent : strokeMain;
+              var rx = ring.r * scaleX;
+              var ry = ring.r * scaleX * 0.22;
+              var py = cy - ring.y * scaleY;
+              ctx.ellipse(cx, py, rx, ry, 0, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+
+            var meridians = 12;
+            for (var m = 0; m < meridians; m++) {
+              var theta = angle + (m * Math.PI * 2) / meridians;
+              var cosT = Math.cos(theta);
+              var sinT = Math.sin(theta);
+
+              ctx.beginPath();
+              ctx.strokeStyle = m % 3 === 0 ? strokeAccent : strokeMain;
+              for (var j = 0; j < rings.length; j++) {
+                var rItem = rings[j];
+                var px = cx + cosT * rItem.r * scaleX;
+                var py2 = cy - rItem.y * scaleY + sinT * rItem.r * scaleX * 0.22;
+                if (j === 0) ctx.moveTo(px, py2);
+                else ctx.lineTo(px, py2);
+              }
+              ctx.stroke();
+            }
+
+            if (!prefersReduced) {
+              rafId = requestAnimationFrame(draw);
+            }
+          }
+
+          rafId = requestAnimationFrame(draw);
+
+          return function () {
+            cancelAnimationFrame(rafId);
+            if (parent) {
+              parent.removeEventListener('pointerenter', onEnter);
+              parent.removeEventListener('pointerleave', onLeave);
+            }
+            window.removeEventListener('resize', resize);
+          };
+        }
+
+        // 3. Application State & Data
+        var FINISH_META = {
+          sage: { name: 'Alpine Sage', dot: '#48634B' },
+          basalt: { name: 'Basalt Black', dot: '#222624' },
+          glacier: { name: 'Glacier Silver', dot: '#B4BDB8' },
+        };
+
+        var SHOWCASE_STAGES = [
+          {
+            title: 'Alpine Sage Matte',
+            sub: 'Powder-coated 18/8 stainless steel',
+          },
+          {
+            title: 'Made for the Outside',
+            sub: 'Zero condensation from morning trails to sunny riverbanks',
+          },
+          {
+            title: 'Machined Steel Collar',
+            sub: 'Leakproof chug lid built to take a knock',
+          },
+          {
+            title: 'All-Day Carry',
+            sub: 'Built to go from sunny ridge hikes to quiet evening camp',
+          },
+        ];
+
+        var state = {
+          theme: 'light',
+          finish: 'sage',
+          size: '950 ml',
+          price: 48,
+          scale: 1,
+          activeStage: 0,
+          splitPct: 50,
+          bag: [],
+          drawerOpen: false,
+          checkedOut: false,
+        };
+
+        var stageTimer = null;
+        var checkoutTimer = null;
+        var isDragging = false;
+
+        // DOM Elements
+        var heroCanvas = document.getElementById('hero-gl-canvas');
+        var specsCanvas = document.getElementById('specs-gl-canvas');
+        var themeToggle = document.getElementById('theme-toggle');
+        var heroStage = document.getElementById('hero-stage');
+        var tiltWrap = document.getElementById('flask-tilt-wrap');
+        var flaskShadow = document.getElementById('flask-shadow');
+        var heroFlaskImg = document.getElementById('hero-flask-img');
+        var orderFlaskImg = document.getElementById('order-flask-img');
+        var orderPriceEl = document.getElementById('order-price');
+        var addToBagBtn = document.getElementById('add-to-bag-btn');
+        var addToBagLabel = document.getElementById('add-to-bag-label');
+        var heroSwatchBtns = document.querySelectorAll('#hero-swatches .swatch-btn');
+        var orderFinishBtns = document.querySelectorAll('#order-finish-row .pill-option');
+        var orderSizeBtns = document.querySelectorAll('#order-size-row .pill-option');
+
+        var showcaseEl = document.getElementById('showcase');
+        var showcaseFrames = document.querySelectorAll('.showcase-frame');
+        var showcaseCaption = document.getElementById('showcase-caption');
+        var captionTitle = document.getElementById('caption-title');
+        var captionSub = document.getElementById('caption-sub');
+        var stageDotBtns = document.querySelectorAll('#showcase-dots .stage-dot');
+
+        var compWrap = document.getElementById('comparison-wrap');
+        var compCold = document.getElementById('comparison-cold');
+        var compHandle = document.getElementById('comparison-handle');
+        var segBtns = document.querySelectorAll('#thermal-segmented .seg-btn');
+
+        var bagTrigger = document.getElementById('bag-trigger');
+        var bagCountEl = document.getElementById('bag-count');
+        var drawerBackdrop = document.getElementById('drawer-backdrop');
+        var bagDrawer = document.getElementById('bag-drawer');
+        var drawerClose = document.getElementById('drawer-close');
+        var drawerEmpty = document.getElementById('drawer-empty');
+        var drawerEmptyCta = document.getElementById('drawer-empty-cta');
+        var drawerItems = document.getElementById('drawer-items');
+        var drawerFooter = document.getElementById('drawer-footer');
+        var drawerTotal = document.getElementById('drawer-total');
+        var checkoutBtn = document.getElementById('checkout-btn');
+
+        // Init WebGL & Canvas
+        initHeroCanvas(heroCanvas);
+        initSpecsCanvas(specsCanvas);
+
+        // Theme Toggle
+        themeToggle.addEventListener('click', function () {
+          state.theme = state.theme === 'light' ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', state.theme);
+        });
+
+        // Finish & Size Configurator
+        function selectFinish(nextFinish) {
+          state.finish = nextFinish;
+          if (heroFlaskImg) heroFlaskImg.setAttribute('data-finish', nextFinish);
+          if (orderFlaskImg) orderFlaskImg.setAttribute('data-finish', nextFinish);
+
+          heroSwatchBtns.forEach(function (btn) {
+            var active = btn.getAttribute('data-finish') === nextFinish;
+            btn.classList.toggle('is-active', active);
+            btn.setAttribute('aria-checked', String(active));
+          });
+
+          orderFinishBtns.forEach(function (btn) {
+            var active = btn.getAttribute('data-finish') === nextFinish;
+            btn.classList.toggle('is-active', active);
+          });
+        }
+
+        function selectSize(nextSize, nextPrice, nextScale) {
+          state.size = nextSize;
+          state.price = nextPrice;
+          state.scale = nextScale;
+
+          if (orderFlaskImg) {
+            orderFlaskImg.style.transform = 'scale(' + nextScale + ')';
+          }
+          if (orderPriceEl) {
+            orderPriceEl.textContent = '$' + nextPrice;
+          }
+          if (addToBagLabel) {
+            addToBagLabel.textContent = 'Add to Bag - $' + nextPrice;
+          }
+
+          orderSizeBtns.forEach(function (btn) {
+            var active = btn.getAttribute('data-size') === nextSize;
+            btn.classList.toggle('is-active', active);
+          });
+        }
+
+        heroSwatchBtns.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            selectFinish(btn.getAttribute('data-finish'));
+          });
+        });
+
+        orderFinishBtns.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            selectFinish(btn.getAttribute('data-finish'));
+          });
+        });
+
+        orderSizeBtns.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            selectSize(
+              btn.getAttribute('data-size'),
+              Number(btn.getAttribute('data-price')),
+              Number(btn.getAttribute('data-scale'))
+            );
+          });
+        });
+
+        // Showcase Stage Selection
+        function updateShowcaseUI(idx) {
+          state.activeStage = idx;
+          var stage = SHOWCASE_STAGES[idx];
+          if (captionTitle && stage) captionTitle.textContent = stage.title;
+          if (captionSub && stage) captionSub.textContent = stage.sub;
+
+          stageDotBtns.forEach(function (dot, i) {
+            var active = i === idx;
+            dot.classList.toggle('is-active', active);
+            dot.setAttribute('aria-selected', String(active));
+          });
+        }
+
+        function setStageWithBlur(nextIdx, delayMs) {
+          state.activeStage = nextIdx;
+          if (showcaseCaption) showcaseCaption.classList.add('is-blurring');
+          if (stageTimer !== null) {
+            window.clearTimeout(stageTimer);
+          }
+          stageTimer = window.setTimeout(function () {
+            stageTimer = null;
+            updateShowcaseUI(nextIdx);
+            if (showcaseCaption) showcaseCaption.classList.remove('is-blurring');
+          }, delayMs);
+        }
+
+        stageDotBtns.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var idx = Number(btn.getAttribute('data-stage'));
+            setStageWithBlur(idx, 110);
+            showcaseFrames.forEach(function (frame, i) {
+              frame.style.clipPath =
+                i <= idx ? 'inset(0 0 0 0%)' : 'inset(0 0 0 100%)';
+            });
+          });
+        });
+
+        // Thermal Comparison Slider
+        function updateSplit(pct, animate) {
+          var clamped = Math.max(0, Math.min(100, pct));
+          state.splitPct = clamped;
+
+          if (compCold) {
+            compCold.style.transition = animate
+              ? 'clip-path 380ms var(--ease-out)'
+              : 'none';
+            compCold.style.clipPath = 'inset(0 ' + (100 - clamped) + '% 0 0)';
+          }
+
+          if (compHandle) {
+            compHandle.style.transition = animate
+              ? 'left 380ms var(--ease-out)'
+              : 'none';
+            compHandle.style.left = 'clamp(22px, ' + clamped + '%, calc(100% - 22px))';
+            compHandle.classList.toggle('is-edge', clamped <= 2 || clamped >= 98);
+            compHandle.setAttribute('aria-valuenow', String(Math.round(clamped)));
+          }
+
+          segBtns.forEach(function (btn) {
+            var target = Number(btn.getAttribute('data-split'));
+            var active = target === 100 ? clamped >= 98 : clamped <= 2;
+            btn.classList.toggle('is-active', active);
+            btn.setAttribute('aria-selected', String(active));
+          });
+        }
+
+        if (compWrap) {
+          compWrap.addEventListener('pointerdown', function (e) {
+            isDragging = true;
+            compWrap.setPointerCapture(e.pointerId);
+            var rect = compWrap.getBoundingClientRect();
+            updateSplit(((e.clientX - rect.left) / rect.width) * 100, false);
+          });
+
+          compWrap.addEventListener('pointermove', function (e) {
+            if (!isDragging) return;
+            var rect = compWrap.getBoundingClientRect();
+            updateSplit(((e.clientX - rect.left) / rect.width) * 100, false);
+          });
+
+          compWrap.addEventListener('pointerup', function () {
+            isDragging = false;
+          });
+
+          compWrap.addEventListener('pointercancel', function () {
+            isDragging = false;
+          });
+        }
+
+        if (compHandle) {
+          compHandle.addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowLeft') updateSplit(state.splitPct - 8, true);
+            if (e.key === 'ArrowRight') updateSplit(state.splitPct + 8, true);
+          });
+        }
+
+        segBtns.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            updateSplit(Number(btn.getAttribute('data-split')), true);
+          });
+        });
+
+        // Bag & Drawer Logic
+        function setDrawerOpen(open) {
+          state.drawerOpen = open;
+          if (drawerBackdrop) drawerBackdrop.hidden = !open;
+          if (bagDrawer) bagDrawer.hidden = !open;
+        }
+
+        function cancelPendingCheckout() {
+          if (checkoutTimer !== null) {
+            window.clearTimeout(checkoutTimer);
+            checkoutTimer = null;
+            state.checkedOut = false;
+            if (checkoutBtn) {
+              checkoutBtn.disabled = false;
+              checkoutBtn.textContent = 'Checkout';
+            }
+          }
+        }
+
+        function renderBag() {
+          var totalQty = state.bag.reduce(function (sum, item) {
+            return sum + item.qty;
+          }, 0);
+          var totalPrice = state.bag.reduce(function (sum, item) {
+            return sum + item.price * item.qty;
+          }, 0);
+
+          if (bagCountEl) bagCountEl.textContent = String(totalQty);
+          if (drawerTotal) drawerTotal.textContent = '$' + totalPrice;
+
+          var isEmpty = state.bag.length === 0;
+          if (drawerEmpty) drawerEmpty.hidden = !isEmpty;
+          if (drawerItems) drawerItems.hidden = isEmpty;
+          if (drawerFooter) drawerFooter.hidden = isEmpty;
+
+          if (!drawerItems) return;
+          drawerItems.innerHTML = '';
+
+          state.bag.forEach(function (item, idx) {
+            var row = document.createElement('div');
+            row.className = 'bag-item';
+
+            var img = document.createElement('img');
+            img.src =
+              'https://www.gstatic.com/aistudio/starter-apps/flask-applet/flask-order-cutout.webp';
+            img.alt = 'Material Flask';
+            img.className = 'bag-item-thumb';
+            img.setAttribute('data-finish', item.finish);
+
+            var info = document.createElement('div');
+            info.className = 'bag-item-info';
+
+            var nameEl = document.createElement('div');
+            nameEl.className = 'bag-item-name';
+            nameEl.textContent = 'Material Flask';
+
+            var metaEl = document.createElement('div');
+            metaEl.className = 'bag-item-meta';
+            metaEl.textContent =
+              FINISH_META[item.finish].name + ' - ' + item.size + ' ($' + item.price + ')';
+
+            var qtyRow = document.createElement('div');
+            qtyRow.className = 'bag-qty-row';
+
+            var decBtn = document.createElement('button');
+            decBtn.type = 'button';
+            decBtn.className = 'qty-btn';
+            decBtn.setAttribute('aria-label', 'Decrease quantity');
+            decBtn.textContent = '-';
+            decBtn.addEventListener('click', function () {
+              updateBagQty(idx, -1);
+            });
+
+            var qtySpan = document.createElement('span');
+            qtySpan.className = 'bag-qty';
+            qtySpan.textContent = String(item.qty);
+
+            var incBtn = document.createElement('button');
+            incBtn.type = 'button';
+            incBtn.className = 'qty-btn';
+            incBtn.setAttribute('aria-label', 'Increase quantity');
+            incBtn.textContent = '+';
+            incBtn.addEventListener('click', function () {
+              updateBagQty(idx, 1);
+            });
+
+            qtyRow.appendChild(decBtn);
+            qtyRow.appendChild(qtySpan);
+            qtyRow.appendChild(incBtn);
+
+            info.appendChild(nameEl);
+            info.appendChild(metaEl);
+            info.appendChild(qtyRow);
+
+            row.appendChild(img);
+            row.appendChild(info);
+            drawerItems.appendChild(row);
+          });
+        }
+
+        function updateBagQty(idx, delta) {
+          cancelPendingCheckout();
+          var updatedQty = state.bag[idx].qty + delta;
+          if (updatedQty <= 0) {
+            state.bag.splice(idx, 1);
+          } else {
+            state.bag[idx].qty = updatedQty;
+          }
+          renderBag();
+        }
+
+        if (addToBagBtn) {
+          addToBagBtn.addEventListener('click', function () {
+            cancelPendingCheckout();
+            var existingIdx = state.bag.findIndex(function (item) {
+              return item.finish === state.finish && item.size === state.size;
+            });
+            if (existingIdx >= 0) {
+              state.bag[existingIdx].qty += 1;
+            } else {
+              state.bag.push({
+                finish: state.finish,
+                size: state.size,
+                price: state.price,
+                qty: 1,
+              });
+            }
+            renderBag();
+            setDrawerOpen(true);
+          });
+        }
+
+        if (bagTrigger) {
+          bagTrigger.addEventListener('click', function () {
+            setDrawerOpen(true);
+          });
+        }
+        if (drawerClose) {
+          drawerClose.addEventListener('click', function () {
+            setDrawerOpen(false);
+          });
+        }
+        if (drawerBackdrop) {
+          drawerBackdrop.addEventListener('click', function () {
+            setDrawerOpen(false);
+          });
+        }
+        if (drawerEmptyCta) {
+          drawerEmptyCta.addEventListener('click', function () {
+            setDrawerOpen(false);
+          });
+        }
+
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && state.drawerOpen) {
+            setDrawerOpen(false);
+          }
+        });
+
+        if (checkoutBtn) {
+          checkoutBtn.addEventListener('click', function () {
+            if (state.checkedOut) return;
+            if (checkoutTimer !== null) {
+              window.clearTimeout(checkoutTimer);
+            }
+            state.checkedOut = true;
+            checkoutBtn.disabled = true;
+            checkoutBtn.textContent = 'Order Confirmed';
+
+            checkoutTimer = window.setTimeout(function () {
+              checkoutTimer = null;
+              state.bag = [];
+              state.checkedOut = false;
+              checkoutBtn.disabled = false;
+              checkoutBtn.textContent = 'Checkout';
+              renderBag();
+              setDrawerOpen(false);
+            }, 1100);
+          });
+        }
+
+        // GSAP, ScrollTrigger, Lenis & Hero 3D Tilt
+        var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var hasGsap = typeof window.gsap !== 'undefined';
+        var hasScrollTrigger = typeof window.ScrollTrigger !== 'undefined';
+        var hasLenis = typeof window.Lenis !== 'undefined';
+
+        if (hasGsap && hasScrollTrigger) {
+          window.gsap.registerPlugin(window.ScrollTrigger);
+        }
+
+        if (!prefersReduced && hasLenis && hasGsap) {
+          var lenis = new window.Lenis({
+            duration: 1.05,
+            easing: function (t) {
+              return Math.min(1, 1.001 - Math.pow(2, -10 * t));
+            },
+            smoothWheel: true,
+          });
+          if (hasScrollTrigger) {
+            lenis.on('scroll', window.ScrollTrigger.update);
+          }
+          window.gsap.ticker.add(function (time) {
+            lenis.raf(time * 1000);
+          });
+          window.gsap.ticker.lagSmoothing(0);
+        }
+
+        // 3D Hero Tilt
+        if (heroStage && tiltWrap && !prefersReduced && hasGsap) {
+          var targetRotX = 0;
+          var targetRotY = 0;
+          var curRotX = 0;
+          var curRotY = 0;
+          var velX = 0;
+          var velY = 0;
+
+          heroStage.addEventListener('pointermove', function (e) {
+            var rect = heroStage.getBoundingClientRect();
+            var nx = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+            var ny = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+            targetRotY = nx * 14;
+            targetRotX = -ny * 10;
+          });
+
+          heroStage.addEventListener('pointerleave', function () {
+            targetRotX = 0;
+            targetRotY = 0;
+          });
+
+          window.gsap.ticker.add(function () {
+            var ax = (targetRotX - curRotX) * 0.08;
+            var ay = (targetRotY - curRotY) * 0.08;
+            velX = (velX + ax) * 0.82;
+            velY = (velY + ay) * 0.82;
+            curRotX += velX;
+            curRotY += velY;
+            tiltWrap.style.transform =
+              'rotateX(' + curRotX.toFixed(2) + 'deg) rotateY(' + curRotY.toFixed(2) + 'deg)';
+            if (flaskShadow) {
+              flaskShadow.style.transform =
+                'translateX(' +
+                (-curRotY * 1.4).toFixed(1) +
+                'px) scale(' +
+                (1 - Math.abs(curRotX) * 0.01) +
+                ')';
+            }
+          });
+        }
+
+        // Pinned Showcase & Bento Scroll Reveals
+        if (!prefersReduced && hasGsap && hasScrollTrigger) {
+          var stageIdxRef = 0;
+          if (showcaseEl && showcaseFrames.length === 4) {
+            var tl = window.gsap.timeline({
+              scrollTrigger: {
+                trigger: showcaseEl,
+                start: 'top top',
+                end: '+=280%',
+                pin: true,
+                scrub: 0.65,
+                onUpdate: function (self) {
+                  var t = self.progress * 3.5;
+                  var nextIdx = 0;
+                  if (t >= 3.07) nextIdx = 3;
+                  else if (t >= 2.02) nextIdx = 2;
+                  else if (t >= 0.97) nextIdx = 1;
+
+                  if (nextIdx !== stageIdxRef) {
+                    stageIdxRef = nextIdx;
+                    setStageWithBlur(nextIdx, 100);
+                  }
+                },
+              },
+            });
+
+            var wipeStarts = [0.25, 1.3, 2.35];
+            showcaseFrames.forEach(function (frame, i) {
+              if (i === 0) return;
+              tl.fromTo(
+                frame,
+                { clipPath: 'inset(0 0 0 100%)' },
+                { clipPath: 'inset(0 0 0 0%)', ease: 'none', duration: 0.8 },
+                wipeStarts[i - 1]
+              );
+            });
+            tl.set({}, {}, 3.5);
+          }
+
+          var bentoGrid = document.getElementById('bento-grid');
+          if (bentoGrid) {
+            window.gsap.from('.reveal-tile', {
+              y: 28,
+              scale: 0.96,
+              opacity: 0,
+              duration: 0.65,
+              stagger: 0.08,
+              ease: 'power3.out',
+              clearProps: 'transform,opacity',
+              scrollTrigger: {
+                trigger: bentoGrid,
+                start: 'top 82%',
+                once: true,
+              },
+            });
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>
